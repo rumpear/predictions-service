@@ -1,6 +1,10 @@
 /** @type {import('jest').Config} */
 module.exports = {
   testTimeout: 60000,
+  // Integration/e2e test *files* all share one Testcontainers Postgres instance for the
+  // whole run (see globalSetup). Running files in parallel workers races truncation and
+  // fixture inserts across files. Serial execution trades speed for correctness here.
+  maxWorkers: 1,
   projects: [
     {
       displayName: 'unit',
