@@ -24,6 +24,7 @@ describe('point_awards: I3 — every pick receives at most one award, ever', () 
       from picks p, settlements s
       where p.user_id = 'user-1' and p.match_id = 'match-1' and s.match_id = 'match-1'
     `.execute(testDb.db);
+    await sql`insert into balances (user_id, points) values ('user-1', 10)`.execute(testDb.db);
 
     await expect(
       sql`
@@ -44,6 +45,7 @@ describe('point_awards: I3 — every pick receives at most one award, ever', () 
         where p.user_id = 'user-1' and p.match_id = 'match-1' and s.match_id = 'match-1'
       `.execute(testDb.db),
     ).resolves.toBeDefined();
+    await sql`insert into balances (user_id, points) values ('user-1', 0)`.execute(testDb.db);
   });
 });
 

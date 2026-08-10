@@ -3,7 +3,9 @@ import { useTestDatabase } from '../../support/integration-db';
 import { assertLedgerInvariants } from '../../support/assert-ledger-invariants';
 
 describe('assertLedgerInvariants', () => {
-  const testDb = useTestDatabase();
+  // Disabled: this file deliberately corrupts the ledger to prove the helper catches it,
+  // which would otherwise trip the harness's own automatic post-test invariant check.
+  const testDb = useTestDatabase({ checkInvariants: false });
 
   it('passes on an empty database', async () => {
     await expect(assertLedgerInvariants(testDb.db)).resolves.toBeUndefined();

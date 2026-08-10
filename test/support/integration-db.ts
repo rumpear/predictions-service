@@ -2,8 +2,19 @@ import { Kysely } from 'kysely';
 import { createDb } from '../../src/infra/db/create-db';
 import { Database } from '../../src/infra/db/schema';
 import { truncateAll } from './reset-database';
+import { assertLedgerInvariants } from './assert-ledger-invariants';
 
-export function useTestDatabase(): { db: Kysely<Database> } {
+export interface UseTestDatabaseOptions {
+  /**
+   * Runs assertLedgerInvariants after every test, per TASK.md §7's shared-helper rule.
+   * Defaults to true. Only the assertLedgerInvariants spec itself should disable this —
+   * it deliberately leaves the ledger corrupted to prove the helper detects it.
+   */
+  checkInvariants?: boolean;
+}
+
+export function useTestDatabase(options: UseTestDatabaseOptions = {}): { db: Kysely<Database> } {
+  const checkInvariants = options.checkInvariants ?? true;
   const ctx = {} as { db: Kysely<Database> };
 
   beforeAll(() => {
@@ -21,6 +32,12 @@ export function useTestDatabase(): { db: Kysely<Database> } {
   beforeEach(async () => {
     await truncateAll(ctx.db);
   });
+
+  if (checkInvariants) {
+    afterEach(async () => {
+      await assertLedgerInvariants(ctx.db);
+    });
+  }
 
   return ctx;
 }
