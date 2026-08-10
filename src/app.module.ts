@@ -4,9 +4,16 @@ import { DatabaseModule } from './infra/db/database.module';
 import { HealthController } from './interfaces/http/health/health.controller';
 import { PicksModule } from './interfaces/http/picks/picks.module';
 import { WebhooksModule } from './interfaces/http/webhooks/webhooks.module';
+import { LeaderboardModule } from './interfaces/http/leaderboard/leaderboard.module';
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), DatabaseModule, PicksModule, WebhooksModule],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    DatabaseModule,
+    PicksModule,
+    WebhooksModule,
+    LeaderboardModule,
+  ],
   controllers: [HealthController],
 })
 export class AppModule {}
