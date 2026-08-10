@@ -1,6 +1,11 @@
 import { Kysely, sql } from 'kysely';
 import { Database } from './schema';
-import { LeaderboardEntry, LeaderboardRepository } from '../../app/leaderboard/leaderboard-repository.port';
+import {
+  LeaderboardBalanceSnapshot,
+  LeaderboardEntry,
+  LeaderboardRebuildSource,
+  LeaderboardRepository,
+} from '../../app/leaderboard/leaderboard-repository.port';
 
 interface RankedRow {
   user_id: string;
@@ -37,7 +42,7 @@ const RANKED_CTE = sql`
   )
 `;
 
-export class PostgresLeaderboardRepository implements LeaderboardRepository {
+export class PostgresLeaderboardRepository implements LeaderboardRepository, LeaderboardRebuildSource {
   constructor(private readonly db: Kysely<Database>) {}
 
   async top(limit: number): Promise<LeaderboardEntry[]> {
@@ -55,5 +60,10 @@ export class PostgresLeaderboardRepository implements LeaderboardRepository {
     `.execute(this.db);
     const row = rows[0];
     return row ? toEntry(row) : null;
+  }
+
+  async allBalances(): Promise<LeaderboardBalanceSnapshot[]> {
+    const rows = await this.db.selectFrom('balances').select(['user_id', 'points']).execute();
+    return rows.map((row) => ({ userId: row.user_id, points: Number(row.points) }));
   }
 }
