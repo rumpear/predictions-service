@@ -25,8 +25,18 @@ export interface PicksTable {
   created_at: Generated<Date>;
 }
 
+export interface SettlementsTable {
+  id: Generated<string>;
+  match_id: string;
+  event_id: string;
+  home_score: number;
+  away_score: number;
+  settled_at: Generated<Date>;
+}
+
 export interface Database {
   users: UsersTable;
   matches: MatchesTable;
   picks: PicksTable;
+  settlements: SettlementsTable;
 }
