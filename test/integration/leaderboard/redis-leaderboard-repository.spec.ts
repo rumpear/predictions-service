@@ -9,9 +9,9 @@ describe('RedisLeaderboardRepository', () => {
   let redis: Redis;
 
   beforeAll(() => {
-    const url = process.env['REDIS_URL'];
+    const url = process.env['INTEGRATION_REDIS_URL'];
     if (!url) {
-      throw new Error('REDIS_URL is not set — did the integration globalSetup run?');
+      throw new Error('INTEGRATION_REDIS_URL is not set — did the integration globalSetup run?');
     }
     redis = new Redis(url);
   });

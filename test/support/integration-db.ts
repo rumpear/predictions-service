@@ -18,9 +18,9 @@ export function useTestDatabase(options: UseTestDatabaseOptions = {}): { db: Kys
   const ctx = {} as { db: Kysely<Database> };
 
   beforeAll(() => {
-    const connectionString = process.env['DATABASE_URL'];
+    const connectionString = process.env['INTEGRATION_DATABASE_URL'];
     if (!connectionString) {
-      throw new Error('DATABASE_URL is not set — did the integration globalSetup run?');
+      throw new Error('INTEGRATION_DATABASE_URL is not set — did the integration globalSetup run?');
     }
     ctx.db = createDb(connectionString);
   });

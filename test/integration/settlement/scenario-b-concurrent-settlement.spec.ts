@@ -15,9 +15,9 @@ describe('Scenario B: concurrent settlement of one match', () => {
   const ITERATIONS = 20;
 
   function connectionString(): string {
-    const value = process.env['DATABASE_URL'];
+    const value = process.env['INTEGRATION_DATABASE_URL'];
     if (!value) {
-      throw new Error('DATABASE_URL is not set — did the integration globalSetup run?');
+      throw new Error('INTEGRATION_DATABASE_URL is not set — did the integration globalSetup run?');
     }
     return value;
   }
