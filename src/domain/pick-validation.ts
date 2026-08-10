@@ -7,7 +7,7 @@ export interface PickInput {
 
 export type ParsePickResult = { ok: true; pick: Pick } | { ok: false; error: string };
 
-const EXACT_SCORE_PATTERN = /^(\d{1,2}):(\d{1,2})$/;
+const EXACT_SCORE_PATTERN = /^(\d+):(\d+)$/;
 
 function isOutcome(value: string): value is Outcome {
   return value === 'home' || value === 'away' || value === 'draw';
@@ -26,12 +26,14 @@ export function parsePickInput(input: PickInput): ParsePickResult {
     const homeStr = match?.[1];
     const awayStr = match?.[2];
     if (homeStr !== undefined && awayStr !== undefined) {
-      return {
-        ok: true,
-        pick: { type: 'exact', predictedHome: Number(homeStr), predictedAway: Number(awayStr) },
-      };
+      const predictedHome = Number(homeStr);
+      const predictedAway = Number(awayStr);
+      if (Number.isSafeInteger(predictedHome) && Number.isSafeInteger(predictedAway)) {
+        return { ok: true, pick: { type: 'exact', predictedHome, predictedAway } };
+      }
+      return { ok: false, error: 'exact pick score is too large to represent precisely' };
     }
-    return { ok: false, error: 'exact pick value must match ^\\d{1,2}:\\d{1,2}$' };
+    return { ok: false, error: 'exact pick value must match ^\\d+:\\d+$' };
   }
 
   return { ok: false, error: 'type must be "result" or "exact"' };
