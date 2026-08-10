@@ -34,9 +34,25 @@ export interface SettlementsTable {
   settled_at: Generated<Date>;
 }
 
+export interface PointAwardsTable {
+  id: Generated<string>;
+  pick_id: string;
+  settlement_id: string;
+  user_id: string;
+  points: number;
+  created_at: Generated<Date>;
+}
+
+export interface BalancesTable {
+  user_id: string;
+  points: Generated<string>;
+}
+
 export interface Database {
   users: UsersTable;
   matches: MatchesTable;
   picks: PicksTable;
   settlements: SettlementsTable;
+  point_awards: PointAwardsTable;
+  balances: BalancesTable;
 }
