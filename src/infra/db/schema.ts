@@ -48,6 +48,15 @@ export interface BalancesTable {
   points: Generated<string>;
 }
 
+export interface WebhookEventsTable {
+  event_id: string;
+  match_id: string;
+  raw_payload: unknown;
+  received_at: Generated<Date>;
+  processed_at: Date | null;
+  outcome: 'applied' | 'duplicate' | 'conflict';
+}
+
 export interface Database {
   users: UsersTable;
   matches: MatchesTable;
@@ -55,4 +64,5 @@ export interface Database {
   settlements: SettlementsTable;
   point_awards: PointAwardsTable;
   balances: BalancesTable;
+  webhook_events: WebhookEventsTable;
 }
