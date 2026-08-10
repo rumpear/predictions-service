@@ -1,5 +1,10 @@
+export interface AwardedPoints {
+  userId: string;
+  points: number;
+}
+
 export type SettleMatchOutcome =
-  | { kind: 'applied' }
+  | { kind: 'applied'; awards: AwardedPoints[] }
   | { kind: 'duplicate' }
   | { kind: 'conflict' }
   | { kind: 'unknown_match' };

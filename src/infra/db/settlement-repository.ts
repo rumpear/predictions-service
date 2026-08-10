@@ -4,6 +4,7 @@ import { Pick } from '../../domain/pick';
 import { scorePick } from '../../domain/scoring';
 import { isPostgresError } from './postgres-error';
 import {
+  AwardedPoints,
   SettleMatchOutcome,
   SettleMatchParams,
   SettlementOptions,
@@ -85,6 +86,8 @@ export class KyselySettlementRepository implements SettlementRepository {
           .where('match_id', '=', matchId)
           .execute();
 
+        let awards: AwardedPoints[] = [];
+
         if (picks.length > 0) {
           const matchResult = { homeScore, awayScore };
           const awardValues = picks.map((pick) =>
@@ -95,7 +98,14 @@ export class KyselySettlementRepository implements SettlementRepository {
           // increment — never read-modify-write. ORDER BY user_id makes lock acquisition
           // order deterministic across concurrent settlements touching overlapping users,
           // which is what makes deadlocks structurally impossible here.
-          await sql`
+          //
+          // balance_upsert is a data-modifying CTE that the outer SELECT never reads from
+          // — Postgres still executes it exactly once regardless (documented behavior for
+          // WITH). That's what lets the final SELECT return the *deltas* themselves (what
+          // the caller needs to replay onto the Redis mirror after commit) rather than
+          // post-update totals; `excluded.points` isn't a valid RETURNING reference at the
+          // top level of an INSERT, only within the ON CONFLICT DO UPDATE clause itself.
+          const { rows } = await sql<{ user_id: string; delta: string }>`
             with inserted_awards as (
               insert into point_awards (pick_id, settlement_id, user_id, points)
               values ${sql.join(awardValues)}
@@ -104,16 +114,22 @@ export class KyselySettlementRepository implements SettlementRepository {
             ),
             deltas as (
               select user_id, sum(points) as delta from inserted_awards group by user_id order by user_id
+            ),
+            balance_upsert as (
+              insert into balances (user_id, points)
+              select user_id, delta from deltas
+              on conflict (user_id) do update set points = balances.points + excluded.points
+              returning 1
             )
-            insert into balances (user_id, points)
             select user_id, delta from deltas
-            on conflict (user_id) do update set points = balances.points + excluded.points
           `.execute(trx);
+
+          awards = rows.map((row) => ({ userId: row.user_id, points: Number(row.delta) }));
         }
 
         await this.logWebhookEvent(trx, eventId, matchId, 'applied', rawPayload);
 
-        return { kind: 'applied' };
+        return { kind: 'applied', awards };
       });
     } catch (err) {
       if (isPostgresError(err) && err.code === FOREIGN_KEY_VIOLATION) {
