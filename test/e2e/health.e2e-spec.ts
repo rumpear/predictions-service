@@ -19,7 +19,7 @@ describe('GET /health (e2e)', () => {
     }).compile();
 
     app = moduleRef.createNestApplication();
-    await app.init();
+    await app.listen(0);
     server = app.getHttpServer() as Server;
     db = app.get(KYSELY);
   });
