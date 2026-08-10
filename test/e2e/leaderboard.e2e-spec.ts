@@ -2,6 +2,7 @@ import type { Server } from 'http';
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { Kysely, sql } from 'kysely';
+import Redis from 'ioredis';
 import request from 'supertest';
 import { AppModule } from '../../src/app.module';
 import { KYSELY } from '../../src/infra/db/database.module';
@@ -13,6 +14,7 @@ describe('GET /leaderboard (e2e)', () => {
   let app: INestApplication;
   let server: Server;
   let db: Kysely<Database>;
+  let redis: Redis;
   let matchCounter = 0;
 
   beforeAll(async () => {
@@ -24,14 +26,25 @@ describe('GET /leaderboard (e2e)', () => {
     await app.listen(0);
     server = app.getHttpServer() as Server;
     db = app.get(KYSELY);
+
+    const redisUrl = process.env['REDIS_URL'];
+    if (!redisUrl) {
+      throw new Error('REDIS_URL is not set — did the e2e globalSetup run?');
+    }
+    redis = new Redis(redisUrl);
   });
 
   afterAll(async () => {
     await app.close();
+    await redis.quit();
   });
 
   beforeEach(async () => {
     await truncateAll(db);
+    // The leaderboard is served from Redis, not Postgres, and its per-test truncate lives
+    // here rather than in the shared harness — GET /leaderboard rebuilds automatically on
+    // an empty sorted set (cold start), so flushing is enough to isolate tests.
+    await redis.flushall();
   });
 
   afterEach(async () => {
