@@ -105,6 +105,27 @@ describe('KyselySettlementRepository.settleMatch', () => {
     expect(await balanceOf('u3')).toBe(0);
   });
 
+  it('returns the per-user point deltas on an applied settlement, for the post-commit leaderboard update', async () => {
+    await seedMatchWithPicks('deltas-match');
+
+    const result = await repository().settleMatch({
+      matchId: 'deltas-match',
+      eventId: 'evt-1',
+      homeScore: 2,
+      awayScore: 1,
+      rawPayload: {},
+    });
+
+    if (result.kind !== 'applied') {
+      throw new Error(`expected applied, got ${result.kind}`);
+    }
+    expect([...result.awards].sort((a, b) => a.userId.localeCompare(b.userId))).toEqual([
+      { userId: 'u1', points: 10 },
+      { userId: 'u2', points: 30 },
+      { userId: 'u3', points: 0 },
+    ]);
+  });
+
   it('a repeat call with the same eventId never credits points twice', async () => {
     await seedMatchWithPicks('repeat-match');
     const params = { matchId: 'repeat-match', eventId: 'evt-1', homeScore: 2, awayScore: 1, rawPayload: {} };
