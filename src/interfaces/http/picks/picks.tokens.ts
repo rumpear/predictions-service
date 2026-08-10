@@ -1,0 +1,1 @@
+export const PICKS_REPOSITORY = Symbol('PICKS_REPOSITORY');
